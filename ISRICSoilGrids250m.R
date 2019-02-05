@@ -62,6 +62,8 @@ if(.Platform$OS.type == "windows"){
 
 SelectedSoilArea<-readOGR("At_Bashy.kml")
 
+
+
 plot(SelectedSoilArea)
 
 # ##-----------------------------------
