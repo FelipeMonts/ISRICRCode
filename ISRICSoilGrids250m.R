@@ -60,11 +60,22 @@ if(.Platform$OS.type == "windows"){
 
 ############## REad the polygon selected in Google earth
 
-SelectedSoilArea<-readOGR("At_Bashy.kml")
+#SelectedSoilArea1<-readOGR("At_Bashy.kml");
+
+SelectedSoilArea<-readOGR("At_Bashy.shp") ;
+
+plot(SelectedSoilArea);
+
+KyrgyszSoils<-raster("TAXOUSDA_1km_Kyrgyzstan.tiff")
+
+plot(KyrgyszSoils)
+plot(SelectedSoilArea,add=T)
+plot(SelectedSoilArea1,add=T)
+
+cropped<-crop(KyrgyszSoils,SelectedSoilArea)
+plot(cropped) 
 
 
-
-plot(SelectedSoilArea)
 
 # ##-----------------------------------
 # ## Accessing data
