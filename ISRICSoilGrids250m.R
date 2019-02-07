@@ -1,12 +1,14 @@
 ##############################################################################################################
 # 
 # 
- # Felipe Montes
- # Trial to get soils from Kyrgystan From the Isric webpage
- # 2019/01/23
- # 
- # 
- # 
+# Felipe Montes
+# Trial to get soils from Kyrgystan From the Isric webpage
+# 2019/01/23
+# 
+# Links to package Raster https://cran.r-project.org/web/packages/raster/index.html
+#                          https://cran.r-project.org/web/packages/raster/raster.pdf
+# 
+# 
 ##############################################################################################################
 # 
 #  
@@ -66,14 +68,25 @@ SelectedSoilArea<-readOGR("At_Bashy.shp") ;
 
 plot(SelectedSoilArea);
 
-KyrgyszSoils<-raster("TAXOUSDA_1km_Kyrgyzstan.tiff")
 
-plot(KyrgyszSoils)
+###### READ the ISRIC Soil Raster data
+
+KyrgyszSoils<-raster("TAXOUSDA_1km_Kyrgyzstan.tiff") ;
+
+plot(KyrgyszSoils) 
 plot(SelectedSoilArea,add=T)
 plot(SelectedSoilArea1,add=T)
 
-cropped<-crop(KyrgyszSoils,SelectedSoilArea)
+######  Extract the Selected area from the ISRIC Soil Raster data
+
+cropped<-crop(KyrgyszSoils,SelectedSoilArea); 
 plot(cropped) 
+image(cropped)
+
+str(cropped)
+##### Transform the raster cropped raster layer into data frame with coordinates 
+
+cropped.dtf<-as.data.frame(cropped, xy=T)
 
 
 
