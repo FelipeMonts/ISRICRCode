@@ -115,6 +115,7 @@ stack(ISRIC.files[1:5])
 
 plot(stack(ISRIC.files[1:5]))
 plot(crop(stack(ISRIC.files[1:5]),SelectedSoilArea))
+as.data.frame(crop(stack(ISRIC.files[1:5]),SelectedSoilArea),xy=T)
 
 
 #### Get the raster files available ######
