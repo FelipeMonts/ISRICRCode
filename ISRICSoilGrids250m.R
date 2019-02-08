@@ -111,14 +111,10 @@ names.1<-stri_split_fixed(ISRIC.meta[1:77,1],"_",simplify = T,n=4)[,c(1,2,3)] ;
 ISRIC.files<-paste(names.1[,1],names.1[,2],names.1[,3], "1km_Kyrgyzstan.tiff",sep = "_") ;
 
 
-stack(ISRIC.files[1:5])
-
-plot(stack(ISRIC.files[1:5]))
-plot(crop(stack(ISRIC.files[1:5]),SelectedSoilArea))
-as.data.frame(crop(stack(ISRIC.files[1:5]),SelectedSoilArea),xy=T)
 
 
-#### Get the raster files available ######
+
+#### Get the raster files available and create  a raster stack of the raster layers for each variable ######
 
 list.files()
 
@@ -129,7 +125,84 @@ plot(SelectedSoilArea,add=T)
 plot(SelectedSoilArea1,add=T)
 
 
-##### Create a raster stack of the raster layers 3
+#    BLDFIE       Bulk density (fine earth, oven dry) in kg / cubic-meter
+BLDFIE.ras<-stack(ISRIC.files[1:7]) ;
+plot(BLDFIE.ras);
+
+
+#    CECSOL                  Cation exchange capacity of soil in cmolc/kg
+CECSOL.ras<-stack(ISRIC.files[8:14]) ;
+plot(CECSOL.ras);
+
+
+# CLYPPT             Clay content (0-2 micro meter) mass fraction in %
+
+CLYPPT.ras<-stack(ISRIC.files[15:21]) ;
+plot(CLYPPT.ras);
+
+
+#  CRFVOL                              Coarse fragments volumetric in %
+
+CRFVOL.ras<-stack(ISRIC.files[22:28]) ;
+plot(CRFVOL.ras);
+
+
+
+# # OCDENS                 Soil organic carbon density in kg per cubic-m
+# 
+# OCDENS.ras<-stack(ISRIC.files[29:35]) ;
+# plot(OCDENS.ras);
+# 
+# 
+
+
+#  ORCDRC Soil organic carbon content (fine earth fraction) in g per kg
+
+ORCDRC.ras<-stack(ISRIC.files[36:42]) ;
+plot(ORCDRC.ras);
+
+
+# PHIHOX                                          Soil pH x 10 in H2O 
+
+PHIHOX.ras<-stack(ISRIC.files[43:49]) ;
+plot(PHIHOX.ras);
+
+
+
+#PHIKCL                                           Soil pH x 10 in KCl
+
+PHIKCL.ras<-stack(ISRIC.files[50:56]) ;
+plot(PHIKCL.ras);
+
+
+
+#SLTPPT            Silt content (2-50 micro meter) mass fraction in %
+
+SLTPPT.ras<-stack(ISRIC.files[57:63]) ;
+plot(SLTPPT.ras);
+
+
+# SNDPPT         Sand content (50-2000 micro meter) mass fraction in %
+
+SNDPPT.ras<-stack(ISRIC.files[64:70]) ;
+plot(SNDPPT.ras);
+
+# # TEXMHT                                   Texture class (USDA system)
+# 
+# TEXMHT.ras<-stack(ISRIC.files[71:77]) ;
+# plot(TEXMHT.ras);
+# 
+
+
+
+
+
+
+plot(stack(ISRIC.files[1:5]))
+plot(crop(stack(ISRIC.files[1:5]),SelectedSoilArea))
+as.data.frame(crop(stack(ISRIC.files[1:5]),SelectedSoilArea),xy=T)
+
+##### Create  3
 
 ######  Extract the Selected area from the ISRIC Soil Raster data
 
