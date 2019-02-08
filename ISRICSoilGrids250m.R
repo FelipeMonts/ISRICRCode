@@ -30,6 +30,7 @@ setwd('C:\\Felipe\\PIHM-CYCLES\\PIHM\\Soils\\ISRICWorldSoils') ;
 # install.packages('lattice');
 # install.packages('aqp');
 # install.packages('soiltexturep');
+# install.packages('stringi') ;
 
 # SoilGrids tutorial
 # Reference: [http://gsif.isric.org/doku.php?id=wiki:tutorial_soilgrids]
@@ -44,8 +45,9 @@ library(XML)
 library(lattice)
 library(aqp)
 library(soiltexture)
+library(stringi)
 
-library(magick)
+library(openxlsx) ;
 
 ## GDAL paths:
 if(.Platform$OS.type == "windows"){
@@ -69,13 +71,64 @@ SelectedSoilArea<-readOGR("At_Bashy.shp") ;
 plot(SelectedSoilArea);
 
 
+
+
 ###### READ the ISRIC Soil Raster data
+
+
+###### Read the metadata describing the raster files information
+
+ISRIC.meta<-read.csv('META_GEOTIFF_1B.csv',header = T)[c(4:31,41:89,209),1:15] ;
+str(ISRIC.meta)
+head(ISRIC.meta)
+tail(ISRIC.meta)
+ISRIC.meta[,1]
+
+######## Variables reported in raster layers for depths  #####
+ 
+#List of variables  
+
+ISRIC.variables<-unique(stri_split_fixed(ISRIC.meta[c(4:89),1],"_",simplify = T)[,1]) ;
+
+#Variable description
+
+ISRIC.var.desc<-unique((ISRIC.meta[c(5:89),3])) ;
+
+ISRIC.Parameters<-data.frame(ISRIC.variables,ISRIC.var.desc);
+
+
+
+#Soil layer levels 
+
+ISRIC.layers<-ISRIC.meta[c(4:9),c( 'ATTRIBUTE_LABEL' , 'DEPTH', 'HORIZON_UPPER_DEPTH', 'HORIZON_LOWER_DEPTH')]
+
+ISRIC.layers$HORIZON_LABEL<-stri_split_fixed(ISRIC.layers$ATTRIBUTE_LABEL,"_",simplify = T)[,3] ;
+
+
+#Names of the raster files to read
+
+names.1<-stri_split_fixed(ISRIC.meta[1:77,1],"_",simplify = T,n=4)[,c(1,2,3)] ;
+ISRIC.files<-paste(names.1[,1],names.1[,2],names.1[,3], "1km_Kyrgyzstan.tiff",sep = "_") ;
+
+
+stack(ISRIC.files[1:5])
+
+plot(stack(ISRIC.files[1:5]))
+plot(crop(stack(ISRIC.files[1:5]),SelectedSoilArea))
+
+
+#### Get the raster files available ######
+
+list.files()
 
 KyrgyszSoils<-raster("TAXOUSDA_1km_Kyrgyzstan.tiff") ;
 
 plot(KyrgyszSoils) 
 plot(SelectedSoilArea,add=T)
 plot(SelectedSoilArea1,add=T)
+
+
+##### Create a raster stack of the raster layers 3
 
 ######  Extract the Selected area from the ISRIC Soil Raster data
 
