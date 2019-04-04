@@ -73,56 +73,18 @@ html_nodes(soilGrids.web, css = '.content')
 
 str(soilGrids.web)
 
-soilGrids.web[[2]]
-
-
-ateam <- read_html("http://www.boxofficemojo.com/movies/?id=ateam.htm")
-html_nodes(ateam, "center")
-html_nodes(ateam, "center font")
-html_nodes(ateam, "center font b")
-
-ateam %>% html_nodes("center") %>% html_nodes("td")
-
-td <- ateam %>% html_nodes("center") %>% html_nodes("td")
-td
-
-
-td %>% html_nodes("font")
-
-
-#URL with js-rendered content to be scraped
-link <- 'https://food.list.co.uk/place/22191-brewhemia-edinburgh/'
-#Read the html page content and extract all javascript codes that are inside a list
-emailjs <- read_html(link) %>% html_nodes('li') %>% html_nodes('script') %>% html_text()
-# Create a new v8 context
-ct <- v8()
-#parse the html content from the js output and print it as text
-read_html(ct$eval(gsub('document.write','',emailjs))) %>% 
-  html_text()
-
-
-
-
-## GDAL paths:
-if(.Platform$OS.type == "windows"){
-  gdal.dir <- shortPathName("C:/Program files/GDAL")
-  gdal_translate <- paste0(gdal.dir, "/gdal_translate.exe")
-  gdalwarp <- paste0(gdal.dir, "/gdalwarp.exe") 
-  gdalinfo <- paste0(gdal.dir, "/gdalinfo.exe")
-} else {
-  gdal_translate = "gdal_translate"
-  gdalwarp = "gdalwarp"
-  gdalinfo = "gdalinfo"
-}
-
 
 ############## REad the polygon selected in Google earth
 
-#SelectedSoilArea1<-readOGR("At_Bashy.kml");
+SelectedSoilArea1<-readOGR("At_Bashy.shp") ;
+SelectedSoilArea2<-readOGR("At_Bashy.kml") ;
+SelectedSoilArea3<-readOGR("At_Bashy2.kml");
+SelectedSoilArea4<-readOGR("At_Bashy3.kml");
 
-SelectedSoilArea<-readOGR("At_Bashy.shp") ;
-
-plot(SelectedSoilArea);
+plot(SelectedSoilArea2);
+plot(SelectedSoilArea1,add=T);
+plot(SelectedSoilArea3,add=T);
+plot(SelectedSoilArea4,add=T);
 
 
 
@@ -154,7 +116,7 @@ ISRIC.Parameters<-data.frame(ISRIC.variables,ISRIC.var.desc);
 
 #Soil layer levels 
 
-ISRIC.layers<-ISRIC.meta[c(4:9),c( 'ATTRIBUTE_LABEL' , 'DEPTH', 'HORIZON_UPPER_DEPTH', 'HORIZON_LOWER_DEPTH')]
+ISRIC.layers<-ISRIC.meta[c(1:7),c( 'ATTRIBUTE_LABEL' , 'DEPTH', 'HORIZON_UPPER_DEPTH', 'HORIZON_LOWER_DEPTH')]
 
 ISRIC.layers$HORIZON_LABEL<-stri_split_fixed(ISRIC.layers$ATTRIBUTE_LABEL,"_",simplify = T)[,3] ;
 
@@ -173,6 +135,8 @@ ISRIC.files<-paste(names.1[,1],names.1[,2],names.1[,3], "1km_Kyrgyzstan.tiff",se
 list.files()
 
 KyrgyszSoils<-raster("TAXOUSDA_1km_Kyrgyzstan.tiff") ;
+hasValues(KyrgyszSoils)
+inMemory(KyrgyszSoils)
 
 plot(KyrgyszSoils) 
 plot(SelectedSoilArea,add=T)
@@ -181,7 +145,28 @@ plot(SelectedSoilArea1,add=T)
 
 #    BLDFIE       Bulk density (fine earth, oven dry) in kg / cubic-meter
 BLDFIE.ras<-stack(ISRIC.files[1:7]) ;
+
+nlayers(BLDFIE.ras)
+
+BLDFIE.brik<-brick(BLDFIE.ras) ;
+
+nlayers(BLDFIE.brik)
+
 plot(BLDFIE.ras);
+
+plot(BLDFIE.brik);
+
+BLDFIE.brik.select<-crop(BLDFIE.brik,SelectedSoilArea4)
+
+plot(BLDFIE.brik.select)
+
+area(BLDFIE.brik.select)
+
+ncol(BLDFIE.brik.select)
+nrow(BLDFIE.brik.select)
+ncell(BLDFIE.brik.select)
+getValues(BLDFIE.brik.select)
+xyFromCell(BLDFIE.brik.select,seq(1,ncell(BLDFIE.brik.select)))
 
 
 #    CECSOL                  Cation exchange capacity of soil in cmolc/kg
