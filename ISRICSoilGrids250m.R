@@ -89,7 +89,7 @@ plot(SelectedSoilArea4,add=T);
 
 
 
-###### READ the ISRIC Soil Raster data
+###### get information from the ISRIC Soil Raster data
 
 
 ###### Read the metadata describing the raster files information
@@ -120,6 +120,11 @@ ISRIC.layers<-ISRIC.meta[c(1:7),c( 'ATTRIBUTE_LABEL' , 'DEPTH', 'HORIZON_UPPER_D
 
 ISRIC.layers$HORIZON_LABEL<-stri_split_fixed(ISRIC.layers$ATTRIBUTE_LABEL,"_",simplify = T)[,3] ;
 
+ISRIC.layers$DEPTH.m<-stri_split_fixed(ISRIC.layers$DEPTH," ",simplify = T)[,1] ;
+
+ISRIC.layers$HORIZON_UPPER_DEPTH.m<-stri_split_fixed(ISRIC.layers$HORIZON_UPPER_DEPTH," ",simplify = T)[,1] ;
+
+ISRIC.layers$HORIZON_LOWER_DEPTH.m<-stri_split_fixed(ISRIC.layers$HORIZON_LOWER_DEPTH," ",simplify = T)[,1] ;
 
 #Names of the raster files to read
 
@@ -144,6 +149,9 @@ plot(SelectedSoilArea1,add=T)
 
 
 #    BLDFIE       Bulk density (fine earth, oven dry) in kg / cubic-meter
+
+#cerate a raster stack/brick with the soil layers raster files that include the spatial Bulk densityinformation
+
 BLDFIE.ras<-stack(ISRIC.files[1:7]) ;
 
 nlayers(BLDFIE.ras)
@@ -156,17 +164,75 @@ plot(BLDFIE.ras);
 
 plot(BLDFIE.brik);
 
-BLDFIE.brik.select<-crop(BLDFIE.brik,SelectedSoilArea4)
+# crop the soil layers for Kirgystan by the selected area in gogle earth to reduce the size of the raster stack/brik
+
+BLDFIE.brik.select<-crop(BLDFIE.brik,SelectedSoilArea4) ;
 
 plot(BLDFIE.brik.select)
 
-area(BLDFIE.brik.select)
+
+#explore the ssize of the seleted area raster stack/brick
 
 ncol(BLDFIE.brik.select)
 nrow(BLDFIE.brik.select)
 ncell(BLDFIE.brik.select)
-getValues(BLDFIE.brik.select)
-xyFromCell(BLDFIE.brik.select,seq(1,ncell(BLDFIE.brik.select)))
+
+# get the bulk density values from the raster stack/brick of spatial bulk density information
+
+
+getValues(BLDFIE.brik.select) ;
+
+# get the coordiantes of the raster cells of the seletced area raster stack/brick
+
+xyFromCell(BLDFIE.brik.select,seq(1,ncell(BLDFIE.brik.select)))  ;
+
+
+#  Transform the Pedon.info query in to the right format to be converted into a SoilProfileCollection object
+#   https://ncss-tech.github.io/AQP/aqp/aqp-intro.html
+#Pedon.info$id<-Pedon.info$mukey ;
+# Pedon.info$top<-Pedon.info$hzdept_r ;
+# Pedon.info$bottom<-Pedon.info$hzdept_r ;
+#Pedon.info$name<-Pedon.info$hzname ;
+
+## init SoilProfileCollection objects from data.frame
+# depths(sp1) <- id ~ top + bottom
+
+
+# SoilProfileCollection objects are typically created by "promoting" data.frame objects (rectangular tables of data) that contain at least three essential columns:
+#   
+#   an ID column uniquely identifying groups of horizons (e.g. pedons)
+# horizon top boundaries
+# horizon bottom boundaries
+# 
+# The data.frame should be pre-sorted according to the profile ID and horizon top boundary. Formula notation is used to define the columns used to promote a data.frame object:
+# 
+# 
+
+
+head(ISRIC.layers,7)
+str(ISRIC.layers)
+str(values(BLDFIE.brik.select))
+
+ISRIC.pedon<-data.frame(ISRIC.layers$HORIZON_LABEL , as.numeric((ISRIC.layers$DEPTH.m)), as.numeric(as.character(ISRIC.layers$HORIZON_UPPER_DEPTH.m)),as.numeric(as.character(ISRIC.layers$HORIZON_LOWER_DEPTH.m)));
+
+names(ISRIC.pedon)<-c('Horizon', 'Depth','top', 'bottom')
+
+
+str(ISRIC.pedon)
+print(ISRIC.pedon)
+
+# Create the generic soil collection object
+
+depths(ISRIC.pedon)<-Horizon ~ top + bottom  ;
+str(ISRIC.pedon)
+depth_units(ISRIC.pedon)<-'m'
+
+
+# SoilProfileCollection object 
+
+
+
+
 
 
 #    CECSOL                  Cation exchange capacity of soil in cmolc/kg
