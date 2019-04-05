@@ -94,7 +94,7 @@ plot(SelectedSoilArea4,add=T);
 
 ###### Read the metadata describing the raster files information
 
-ISRIC.meta<-read.csv('META_GEOTIFF_1B.csv',header = T)[c(4:31,41:89,209),1:15] ;
+ISRIC.meta<-read.csv('META_GEOTIFF_1B.csv',header = T)[c(1,4:31,41:89,209),1:15] ;
 str(ISRIC.meta)
 head(ISRIC.meta)
 tail(ISRIC.meta)
@@ -104,21 +104,37 @@ ISRIC.meta[,1]
  
 #List of variables  
 
-ISRIC.variables<-unique(stri_split_fixed(ISRIC.meta[c(4:89),1],"_",simplify = T)[,1]) ;
+#ISRIC.variables<-unique(stri_split_fixed(ISRIC.meta[c(4:89),1],"_",simplify = T)[,1]) ;
+ISRIC.variables<-unique(stri_split_fixed(ISRIC.meta[,1],"_",simplify = T)[,1]) ;
 
 #Variable description
 
-ISRIC.var.desc<-unique((ISRIC.meta[c(5:89),3])) ;
+#ISRIC.var.desc<-unique((ISRIC.meta[c(5:89),3])) ;
+
+ISRIC.var.desc<-unique((ISRIC.meta[,3])) ;
 
 ISRIC.Parameters<-data.frame(ISRIC.variables,ISRIC.var.desc);
 
 
 
+########################################################################################################## 
+# 
+#          the raster for variable [1]  BDRICM Depth to bedrock (R horizon) up to 200 cm does not work. 
+# 
+# 
+###########################################################################################################  
+
+
+
+
 #Soil layer levels 
 
-ISRIC.layers<-ISRIC.meta[c(1:7),c( 'ATTRIBUTE_LABEL' , 'DEPTH', 'HORIZON_UPPER_DEPTH', 'HORIZON_LOWER_DEPTH')]
+ISRIC.layers<-ISRIC.meta[c(2:8),c( 'ATTRIBUTE_LABEL' , 'DEPTH', 'HORIZON_UPPER_DEPTH', 'HORIZON_LOWER_DEPTH')];
+
 
 ISRIC.layers$HORIZON_LABEL<-stri_split_fixed(ISRIC.layers$ATTRIBUTE_LABEL,"_",simplify = T)[,3] ;
+
+# ISRIC.layers$HORIZON_LABEL[1]<-"Depth.BR"
 
 ISRIC.layers$DEPTH.m<-stri_split_fixed(ISRIC.layers$DEPTH," ",simplify = T)[,1] ;
 
@@ -126,10 +142,30 @@ ISRIC.layers$HORIZON_UPPER_DEPTH.m<-stri_split_fixed(ISRIC.layers$HORIZON_UPPER_
 
 ISRIC.layers$HORIZON_LOWER_DEPTH.m<-stri_split_fixed(ISRIC.layers$HORIZON_LOWER_DEPTH," ",simplify = T)[,1] ;
 
+
+
+########################################################################################################## 
+#
+#  HORIZON_UPPER_DEPTH.m and HORIZON_LOWER_DEPTH.m have the same values in the metadata  META_GEOTIFF_1B.csv database. 
+#  It is not clear whybut that is the way it is. Inorder with work with properly defined soil horizons there needs to be
+#  a difference between the upper and lower horizon depth, a thickness. This is corrrected in the code below
+# 
+# 
+###########################################################################################################  
+
+ISRIC.layers$Thickness.m<-c(0.05,0.1,0.15,0.3,0.4,1.0,0.05) ;
+
+ISRIC.layers$Low_Depth.m<-as.numeric(ISRIC.layers$HORIZON_UPPER_DEPTH.m)+ISRIC.layers$Thickness.m 
+
+
+
+
 #Names of the raster files to read
 
 names.1<-stri_split_fixed(ISRIC.meta[1:77,1],"_",simplify = T,n=4)[,c(1,2,3)] ;
 ISRIC.files<-paste(names.1[,1],names.1[,2],names.1[,3], "1km_Kyrgyzstan.tiff",sep = "_") ;
+
+ISRIC.files[1]<-paste(names.1[1,1],names.1[1,2], "1km_Kyrgyzstan.tiff",sep = "_")
 
 
 
@@ -144,15 +180,21 @@ hasValues(KyrgyszSoils)
 inMemory(KyrgyszSoils)
 
 plot(KyrgyszSoils) 
-plot(SelectedSoilArea,add=T)
+plot(SelectedSoilArea2,add=T)
 plot(SelectedSoilArea1,add=T)
+
+
+# BDRICM_M_250m_ll.tif Depth to bedrock (R horizon) up to 200 cm
+
+BDRICM.ras<-stack(ISRIC.files[1]) 
+
 
 
 #    BLDFIE       Bulk density (fine earth, oven dry) in kg / cubic-meter
 
 #cerate a raster stack/brick with the soil layers raster files that include the spatial Bulk densityinformation
 
-BLDFIE.ras<-stack(ISRIC.files[1:7]) ;
+BLDFIE.ras<-stack(ISRIC.files[2:8]) ;
 
 nlayers(BLDFIE.ras)
 
@@ -180,11 +222,11 @@ ncell(BLDFIE.brik.select)
 # get the bulk density values from the raster stack/brick of spatial bulk density information
 
 
-getValues(BLDFIE.brik.select) ;
+Pedon.values<-getValues(BLDFIE.brik.select) ;
 
 # get the coordiantes of the raster cells of the seletced area raster stack/brick
 
-xyFromCell(BLDFIE.brik.select,seq(1,ncell(BLDFIE.brik.select)))  ;
+Pedon.coord<-xyFromCell(BLDFIE.brik.select,seq(1,ncell(BLDFIE.brik.select)))  ;
 
 
 #  Transform the Pedon.info query in to the right format to be converted into a SoilProfileCollection object
@@ -213,9 +255,11 @@ head(ISRIC.layers,7)
 str(ISRIC.layers)
 str(values(BLDFIE.brik.select))
 
-ISRIC.pedon<-data.frame(ISRIC.layers$HORIZON_LABEL , as.numeric((ISRIC.layers$DEPTH.m)), as.numeric(as.character(ISRIC.layers$HORIZON_UPPER_DEPTH.m)),as.numeric(as.character(ISRIC.layers$HORIZON_LOWER_DEPTH.m)));
+ISRIC.pedon<-data.frame(ISRIC.layers$HORIZON_LABEL , as.numeric((ISRIC.layers$DEPTH.m)), as.numeric(as.character(ISRIC.layers$HORIZON_UPPER_DEPTH.m)),ISRIC.layers$Low_Depth.m,ISRIC.layers$Thickness.m );
 
-names(ISRIC.pedon)<-c('Horizon', 'Depth','top', 'bottom')
+names(ISRIC.pedon)<-c('Horizon', 'Depth','top', 'bottom','thickness');
+
+ISRIC.pedon$ID<-"ISRIC" ;
 
 
 str(ISRIC.pedon)
@@ -223,9 +267,21 @@ print(ISRIC.pedon)
 
 # Create the generic soil collection object
 
-depths(ISRIC.pedon)<-Horizon ~ top + bottom  ;
+depths(ISRIC.pedon)<-ID ~ top + bottom  ;
 str(ISRIC.pedon)
 depth_units(ISRIC.pedon)<-'m'
+
+
+ISRIC.pedon$BLDFIE<-t(Pedon.values)[,1]
+
+plot(ISRIC.pedon, color='BLDFIE', name='BLDFIE')
+
+
+siteNames(ISRIC.pedon)
+
+horizons(ISRIC.pedon)
+
+site(ISRIC.pedon)
 
 
 # SoilProfileCollection object 
